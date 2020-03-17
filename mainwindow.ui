@@ -151,6 +151,11 @@
       <string>Sun-Moon</string>
      </property>
     </item>
+    <item>
+     <property name="text">
+      <string>Mistake(Sun - Moon)</string>
+     </property>
+    </item>
    </widget>
    <widget class="QChartView" name="graphicsView">
     <property name="geometry">

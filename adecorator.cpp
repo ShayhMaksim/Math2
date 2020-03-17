@@ -59,15 +59,24 @@ TVector MoonDecorator::getRight( const TVector& X, long double t )
    TVector dx_Sattelite=Model->getRight(X,t);
    TVector RMoon(3);
 
-
-   RMoon=-(dX_EMS.Concat(0,2)-dX_EMS.Concat(3,5))*EMS->a;
+   TVector EM(3);
+   //EM=(dX_EMS.Concat(0,2)-dX_EMS.Concat(3,5))*EMS->a;
    for(int i=0;i<3;i++)
-       RMoon[i]+=X[i];
+       EM[i]=dX_EMS[i]-dX_EMS[i+3];
 
+   EM=EM*EMS->a;
+   RMoon=EM;
+   for(int i=0;i<3;i++)
+       RMoon[i]-=X[i];
 
-   Y[3]=dx_Sattelite[3]+EMS->mu[0]*EMS->G/pow(RMoon.length(),3)*RMoon[0];
-   Y[4]=dx_Sattelite[4]+EMS->mu[0]*EMS->G/pow(RMoon.length(),3)*RMoon[1];
-   Y[5]=dx_Sattelite[5]+EMS->mu[0]*EMS->G/pow(RMoon.length(),3)*RMoon[2];
+   auto u=EMS->mu[0]*EMS->G;
+
+   auto RMoonlength=pow(RMoon.length(),3);
+   auto EMlength=pow(EM.length()/EMS->a,3)*pow(EMS->a,3);
+
+   Y[3]=dx_Sattelite[3]+u/RMoonlength*RMoon[0];
+   Y[4]=dx_Sattelite[4]+u/RMoonlength*RMoon[1];
+   Y[5]=dx_Sattelite[5]+u/RMoonlength*RMoon[2];
 
    return Y;
 }
@@ -125,14 +134,16 @@ void SunDecorator::Run()
             Y[i]=X[i+3];
 
         //ошибка в логике (нужно было брать X[0],X[1],X[2]
-
-        RSun=(dX_EMS.Concat(6,8)-dX_EMS.Concat(3,5))*EMS->a;
+        RSun=-(dX_EMS.Concat(6,8)-dX_EMS.Concat(3,5))*EMS->a;
         for(int i=0;i<3;i++)
             RSun[i]+=X[i];
 
-        Y[3]=dX[3]+EMS->mu[2]*EMS->G/pow(RSun.length(),3)*RSun[2];
-        Y[4]=dX[4]+EMS->mu[2]*EMS->G/pow(RSun.length(),3)*RSun[2];
-        Y[5]=dX[5]+EMS->mu[2]*EMS->G/pow(RSun.length(),3)*RSun[2];
+        auto RSunlength=pow(RSun.length(),3);
+        auto u=EMS->mu[2]*EMS->G;
+
+        Y[3]=dX[3]+u/RSunlength*RSun[0];
+        Y[4]=dX[4]+u/RSunlength*RSun[1];
+        Y[5]=dX[5]+u/RSunlength*RSun[2];
         return Y;
 
  }

@@ -33,10 +33,10 @@ private slots:
     void on_MainWindow_iconSizeChanged(const QSize &iconSize);
 
 private:
-    double theta=0, i=M_PI_4, w=0, a=10000000,  e=0, O=0;
+    double theta=0, i=M_PI_4, w=0, a=20000000,  e=0, O=0;
     Ui::MainWindow *ui;
     ModelEMS * E_S;
-    NormalGPZ * E_M;
+    Sattelite * E_M;
     MoonDecorator * Decorator_moon;
     SunDecorator * Decorator_sun;
     void setSeries(QLineSeries *series,TMatrix Result,int first,int second,int j,int k,double mas);

@@ -8,13 +8,13 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
     E_S=new ModelEMS(0,0.1,0.00001);
-    E_M=new NormalGPZ(0,E_S->T*0.003,0.00001*E_S->T,theta,i,w,a,e,O);
+    E_M=new Sattelite(0,E_S->T*0.003,0.00001*E_S->T,theta,i,w,a,e,O);
     TVector X0=Sattelite::setInitialPosition(theta,i,w,a,e,O);
     Decorator_moon=new MoonDecorator(0,0.003,0.00001,*E_M,X0);
     Decorator_moon->Run();
-    Decorator_sun=new SunDecorator(0,0.003,0.00001,*Decorator_moon,X0);
+    Decorator_sun=new SunDecorator(0,0.003,0.00001,*E_M,X0);
     Decorator_sun->Run();
-   // E_M->setInitialPosition(theta,i,w,a,e,O);
+
     ui->progressBar->setRange(0,100);
     ui->progressBar->setValue((float)E_M->getT0()/E_M->getT1()*100);
 
@@ -272,6 +272,19 @@ void MainWindow::on_pushButton_2_clicked()
                 }
     }
 
+    if((ui->comboBox_3->currentText()=="Mistake(Sun - Moon)")&&(second!=first)&&(first==0)&&(second!=0))
+    {
+        TMatrix Result1=Decorator_moon->getResult();
+        TMatrix Result2=Decorator_sun->getResult();
+        for (int i=0;i<Result1.GetRowCount();i++)
+                {
+                        auto res1=(qreal)(Result1(i,0));
+                        auto res2=(qreal)(Result1(i,second)-Result2(i,second));
+                       *series << QPointF(  res1,res2 );
+                       ui->progressBar->setValue(50+30*(double)i/Result.GetRowCount());
+                }
+    }
+
 
     ui->progressBar->setValue(80);
 
@@ -290,7 +303,15 @@ void MainWindow::on_pushButton_2_clicked()
     //настройка осей графика
     QValueAxis *axisX=new QValueAxis();
     axisX->setTitleText(arg[first]);
-    axisX->setLabelFormat("%i");
+    if (ui->comboBox_3->currentText()!="Mistake(Sun - Moon)")
+    {
+        axisX->setLabelFormat("%i");
+    }
+    else
+    {
+        axisX->setLabelFormat("%f");
+    }
+
     chart->addAxis(axisX,Qt::AlignBottom);
     series->attachAxis(axisX);
     //настройка осей графика
@@ -298,7 +319,9 @@ void MainWindow::on_pushButton_2_clicked()
 
     QValueAxis *axisY=new QValueAxis();
     axisY->setTitleText(arg[second]);
+    if (ui->comboBox_3->currentText()!="Mistake(Sun - Moon)")
     axisY->setLabelFormat("%i");
+    else axisX->setLabelFormat("%f");
     chart->addAxis(axisY,Qt::AlignLeft);
     series->attachAxis(axisY);
 
