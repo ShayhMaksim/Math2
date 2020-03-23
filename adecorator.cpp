@@ -19,6 +19,8 @@ MoonDecorator::MoonDecorator(long double t0, long double t1, long double Samplin
     this->GlobalT=t0;
 
     this->X0=X0;
+
+    Run();
 }
 
 void MoonDecorator::Run()
@@ -64,7 +66,7 @@ TVector MoonDecorator::getRight( const TVector& X, long double t )
    for(int i=0;i<3;i++)
        EM[i]=dX_EMS[i]-dX_EMS[i+3];
 
-   EM=EM*EMS->a;
+   EM=EM*(EMS->a);
    RMoon=EM;
    for(int i=0;i<3;i++)
        RMoon[i]-=X[i];
@@ -72,7 +74,7 @@ TVector MoonDecorator::getRight( const TVector& X, long double t )
    auto u=EMS->mu[0]*EMS->G;
 
    auto RMoonlength=pow(RMoon.length(),3);
-   auto EMlength=pow(EM.length()/EMS->a,3)*pow(EMS->a,3);
+//   auto EMlength=pow(EM.length()/EMS->a,3)*pow(EMS->a,3);
 
    Y[3]=dx_Sattelite[3]+u/RMoonlength*RMoon[0];
    Y[4]=dx_Sattelite[4]+u/RMoonlength*RMoon[1];
@@ -92,6 +94,7 @@ SunDecorator::SunDecorator(long double t0, long double t1, long double SamplingI
     this->SamplingIncrement=SamplingIncrement*EMS->T;
     this->GlobalT=t0;
     this->X0=X0;
+    Run();
 }
 
 void SunDecorator::Run()
@@ -134,9 +137,11 @@ void SunDecorator::Run()
             Y[i]=X[i+3];
 
         //ошибка в логике (нужно было брать X[0],X[1],X[2]
-        RSun=-(dX_EMS.Concat(6,8)-dX_EMS.Concat(3,5))*EMS->a;
         for(int i=0;i<3;i++)
-            RSun[i]+=X[i];
+        RSun[i]=(dX_EMS[i+6]-dX_EMS[i+3]);
+        RSun=RSun*(EMS->a);
+        for(int i=0;i<3;i++)
+            RSun[i]-=X[i];
 
         auto RSunlength=pow(RSun.length(),3);
         auto u=EMS->mu[2]*EMS->G;

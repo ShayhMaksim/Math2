@@ -11,9 +11,9 @@ MainWindow::MainWindow(QWidget *parent)
     E_M=new Sattelite(0,E_S->T*0.003,0.00001*E_S->T,theta,i,w,a,e,O);
     TVector X0=Sattelite::setInitialPosition(theta,i,w,a,e,O);
     Decorator_moon=new MoonDecorator(0,0.003,0.00001,*E_M,X0);
-    Decorator_moon->Run();
+   // Decorator_moon->Run();
     Decorator_sun=new SunDecorator(0,0.003,0.00001,*E_M,X0);
-    Decorator_sun->Run();
+   // Decorator_sun->Run();
 
     ui->progressBar->setRange(0,100);
     ui->progressBar->setValue((float)E_M->getT0()/E_M->getT1()*100);
@@ -185,7 +185,7 @@ void MainWindow::on_pushButton_2_clicked()
                                                  X0);
                 TIntegrator * integrator3=new TDormandPrince();
                 integrator3->setPrecision(1e-12);
-                Decorator_moon->Run();
+            //    Decorator_moon->Run();
                 integrator3->Run(Decorator_moon);
                 delete integrator3;
             }));
@@ -201,7 +201,7 @@ void MainWindow::on_pushButton_2_clicked()
                                                X0);
                 TIntegrator * integrator3=new TDormandPrince();
                 integrator3->setPrecision(1e-12);
-                Decorator_sun->Run();
+            //    Decorator_sun->Run();
                 integrator3->Run(Decorator_sun);
                 delete integrator3;
             }));
