@@ -138,6 +138,11 @@
     </item>
     <item>
      <property name="text">
+      <string>Earth-Sattelite(with Full data)</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
       <string>Earth-Moon</string>
      </property>
     </item>
@@ -153,7 +158,17 @@
     </item>
     <item>
      <property name="text">
-      <string>Mistake(Sun - Moon)</string>
+      <string>Mistake(Classic - Moon)</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>Mistake(Classic - Sun)</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>Mistake(Classic - Full)</string>
      </property>
     </item>
    </widget>

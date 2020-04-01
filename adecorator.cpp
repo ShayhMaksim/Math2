@@ -50,8 +50,10 @@ TVector MoonDecorator::getRight( const TVector& X, long double t )
    } else {
        if(EMS->getResult().GetRowHigh()>GlobalIndex)
        {
+
            GlobalT+=SamplingIncrement;
            GlobalIndex++;
+           dX_EMS=vec_dX_EMS.at(GlobalIndex);
        }
    }
    for(int i=0;i<3;i++)
@@ -74,11 +76,11 @@ TVector MoonDecorator::getRight( const TVector& X, long double t )
    auto u=EMS->mu[0]*EMS->G;
 
    auto RMoonlength=pow(RMoon.length(),3);
-//   auto EMlength=pow(EM.length()/EMS->a,3)*pow(EMS->a,3);
+   auto EMlength=pow(EM.length(),3);
 
-   Y[3]=dx_Sattelite[3]+u/RMoonlength*RMoon[0];
-   Y[4]=dx_Sattelite[4]+u/RMoonlength*RMoon[1];
-   Y[5]=dx_Sattelite[5]+u/RMoonlength*RMoon[2];
+   Y[3]=dx_Sattelite[3]+u/RMoonlength*RMoon[0];//-u/EMlength*EM[0];
+   Y[4]=dx_Sattelite[4]+u/RMoonlength*RMoon[1];//-u/EMlength*EM[1];
+   Y[5]=dx_Sattelite[5]+u/RMoonlength*RMoon[2];//-u/EMlength*EM[2];
 
    return Y;
 }
@@ -122,7 +124,7 @@ void SunDecorator::Run()
         TVector dX=Model->getRight(X,t);
         TVector dX_EMS(9);
         TVector RSun(3);
-
+        TVector ES(3);
        if (t<GlobalT+SamplingIncrement){
            dX_EMS=vec_dX_EMS.at(GlobalIndex);
        } else {
@@ -130,6 +132,7 @@ void SunDecorator::Run()
            {
                GlobalT+=SamplingIncrement;
                GlobalIndex++;
+               dX_EMS=vec_dX_EMS.at(GlobalIndex);
            }
        }
 
@@ -138,17 +141,22 @@ void SunDecorator::Run()
 
         //ошибка в логике (нужно было брать X[0],X[1],X[2]
         for(int i=0;i<3;i++)
-        RSun[i]=(dX_EMS[i+6]-dX_EMS[i+3]);
-        RSun=RSun*(EMS->a);
+        ES[i]=(dX_EMS[i+6]-dX_EMS[i+3]);
+
+        ES=ES*(EMS->a);
+
+        RSun=ES;
         for(int i=0;i<3;i++)
             RSun[i]-=X[i];
 
+        auto ESlength=pow(ES.length(),3);
         auto RSunlength=pow(RSun.length(),3);
+
         auto u=EMS->mu[2]*EMS->G;
 
-        Y[3]=dX[3]+u/RSunlength*RSun[0];
-        Y[4]=dX[4]+u/RSunlength*RSun[1];
-        Y[5]=dX[5]+u/RSunlength*RSun[2];
+        Y[3]=dX[3]+u/RSunlength*RSun[0];//-u/ESlength*ES[0];
+        Y[4]=dX[4]+u/RSunlength*RSun[1];//-u/ESlength*ES[1];
+        Y[5]=dX[5]+u/RSunlength*RSun[2];//-u/ESlength*ES[2];
         return Y;
 
  }

@@ -9,25 +9,26 @@ MainWindow::MainWindow(QWidget *parent)
 
     E_S=new ModelEMS(0,0.1,0.00001);
     E_M=new Sattelite(0,E_S->T*0.003,0.00001*E_S->T,theta,i,w,a,e,O);
+
     TVector X0=Sattelite::setInitialPosition(theta,i,w,a,e,O);
+
     Decorator_moon=new MoonDecorator(0,0.003,0.00001,*E_M,X0);
-   // Decorator_moon->Run();
     Decorator_sun=new SunDecorator(0,0.003,0.00001,*E_M,X0);
-   // Decorator_sun->Run();
+    Decorator_all=new SunDecorator(0,0.003,0.00001,*Decorator_moon,X0);
 
     ui->progressBar->setRange(0,100);
     ui->progressBar->setValue((float)E_M->getT0()/E_M->getT1()*100);
 
     auto thread_1=std::async (std::launch::async, ([&](){
         TIntegrator * integrator=new TDormandPrince();
-        integrator->setPrecision(1e-12);
+        integrator->setPrecision(1e-8);
         integrator->Run(E_M);
         delete integrator;
     }));
 
     auto thread_2=std::async(std::launch::async,([&](){
         TIntegrator * integrator2=new TDormandPrince();
-        integrator2->setPrecision(1e-12);
+        integrator2->setPrecision(1e-8);
         integrator2->Run(E_S);
         delete integrator2;
     }));
@@ -38,22 +39,27 @@ MainWindow::MainWindow(QWidget *parent)
 
     auto thread_3=std::async(std::launch::async,([&](){
         TIntegrator * integrator3=new TDormandPrince();
-        integrator3->setPrecision(1e-12);
+        integrator3->setPrecision(1e-8);
         integrator3->Run(Decorator_moon);
         delete integrator3;
     }));
 
 
         TIntegrator * integrator4=new TDormandPrince();
-        integrator4->setPrecision(1e-12);
+        integrator4->setPrecision(1e-8);
         integrator4->Run(Decorator_sun);
         delete integrator4;
-
 
     thread_2.get();
     thread_3.get();
 
-
+    thread_3=std::async(std::launch::async,([&](){
+        TIntegrator * integrator3=new TDormandPrince();
+        integrator3->setPrecision(1e-8);
+        integrator3->Run(Decorator_all);
+        delete integrator3;
+    }));
+thread_3.get();
 
     setDialog(theta*180/M_PI,i*180/M_PI,w*180/M_PI,a,e,O*180/M_PI);
 }
@@ -153,7 +159,7 @@ void MainWindow::on_pushButton_2_clicked()
         if(ui->comboBox_3->currentText()=="Earth-Sattelite")
         {
             delete E_M;
-             E_M=new NormalGPZ(0,ui->lineEdit->text().toDouble()*E_S->T,0.001*ui->lineEdit->text().toDouble()*E_S->T,theta,i,w,a,e,O);
+             E_M=new Sattelite(0,ui->lineEdit->text().toDouble()*E_S->T,0.001*ui->lineEdit->text().toDouble()*E_S->T,theta,i,w,a,e,O);
             thread=std::async (std::launch::async, ([&](){
                 TIntegrator * integrator=new TDormandPrince();
                 integrator->setPrecision(1e-12);
@@ -176,7 +182,6 @@ void MainWindow::on_pushButton_2_clicked()
         } else if (ui->comboBox_3->currentText()=="Earth-Sattelite(with Moon data)")
         {        
             thread=std::async(std::launch::async,([&](){
-             //   delete Decorator;
                 TVector X0=Sattelite::setInitialPosition(theta,i,w,a,e,O);
                 Decorator_moon=new MoonDecorator(0,
                                                  ui->lineEdit->text().toDouble(),
@@ -185,14 +190,13 @@ void MainWindow::on_pushButton_2_clicked()
                                                  X0);
                 TIntegrator * integrator3=new TDormandPrince();
                 integrator3->setPrecision(1e-12);
-            //    Decorator_moon->Run();
+
                 integrator3->Run(Decorator_moon);
                 delete integrator3;
             }));
         } else if (ui->comboBox_3->currentText()=="Earth-Sattelite(with Sun data)")
         {
             thread=std::async(std::launch::async,([&](){
-               // delete DecoratorNGPZ;
                 TVector X0=Sattelite::setInitialPosition(theta,i,w,a,e,O);
                 Decorator_sun=new SunDecorator(0,
                                                ui->lineEdit->text().toDouble(),
@@ -201,8 +205,21 @@ void MainWindow::on_pushButton_2_clicked()
                                                X0);
                 TIntegrator * integrator3=new TDormandPrince();
                 integrator3->setPrecision(1e-12);
-            //    Decorator_sun->Run();
                 integrator3->Run(Decorator_sun);
+                delete integrator3;
+            }));
+        } else if (ui->comboBox_3->currentText()=="Earth-Sattelite(with Full data)")
+        {
+            thread=std::async(std::launch::async,([&](){
+                TVector X0=Sattelite::setInitialPosition(theta,i,w,a,e,O);
+                Decorator_all=new SunDecorator(0,
+                                               ui->lineEdit->text().toDouble(),
+                                               0.001*ui->lineEdit->text().toDouble(),
+                                               *Decorator_moon,
+                                               X0);
+                TIntegrator * integrator3=new TDormandPrince();
+                integrator3->setPrecision(1e-12);
+                integrator3->Run(Decorator_all);
                 delete integrator3;
             }));
         }
@@ -270,16 +287,81 @@ void MainWindow::on_pushButton_2_clicked()
                        *series << QPointF(  (qreal)Result(i,first),(qreal)Result(i,second) );
                        ui->progressBar->setValue(50+30*(double)i/Result.GetRowCount());
                 }
+    } else if(ui->comboBox_3->currentText()=="Earth-Sattelite(with Full data)")
+    {
+        Result=Decorator_all->getResult();
+        for (int i=0;i<Result.GetRowCount();i++)
+                {
+                       *series << QPointF(  (qreal)Result(i,first),(qreal)Result(i,second) );
+                       ui->progressBar->setValue(50+30*(double)i/Result.GetRowCount());
+                }
     }
 
-    if((ui->comboBox_3->currentText()=="Mistake(Sun - Moon)")&&(second!=first)&&(first==0)&&(second!=0))
+    if((ui->comboBox_3->currentText()=="Mistake(Classic - Moon)")&&(second!=first))
     {
-        TMatrix Result1=Decorator_moon->getResult();
+        TMatrix Result1=E_M->getResult();
+        TMatrix Result2=Decorator_moon->getResult();
+        for (int i=0;i<Result1.GetRowCount();i++)
+                {
+                        qreal res1,res2;
+                        if (first==0)
+                        res1=(qreal)(Result1(i,first));
+                        else {
+                          res1=(qreal)(Result1(i,first)-Result2(i,first));
+                        }
+
+                        if (second==0)
+                        res2=(qreal)(Result2(i,second));
+                        else {
+                          res2=(qreal)(Result1(i,second)-Result2(i,second));
+                        }
+
+                       *series << QPointF(  res1,res2 );
+                       ui->progressBar->setValue(50+30*(double)i/Result.GetRowCount());
+                }
+    }
+
+    if((ui->comboBox_3->currentText()=="Mistake(Classic - Sun)")&&(second!=first))
+    {
+        TMatrix Result1=E_M->getResult();
         TMatrix Result2=Decorator_sun->getResult();
         for (int i=0;i<Result1.GetRowCount();i++)
                 {
-                        auto res1=(qreal)(Result1(i,0));
-                        auto res2=(qreal)(Result1(i,second)-Result2(i,second));
+            qreal res1,res2;
+            if (first==0)
+            res1=(qreal)(Result1(i,first));
+            else {
+              res1=(qreal)(Result1(i,first)-Result2(i,first));
+            }
+
+            if (second==0)
+            res2=(qreal)(Result2(i,second));
+            else {
+              res2=(qreal)(Result1(i,second)-Result2(i,second));
+            }
+                       *series << QPointF(  res1,res2 );
+                       ui->progressBar->setValue(50+30*(double)i/Result.GetRowCount());
+                }
+    }
+
+    if((ui->comboBox_3->currentText()=="Mistake(Classic - Full)")&&(second!=first))
+    {
+        TMatrix Result1=E_M->getResult();
+        TMatrix Result2=Decorator_all->getResult();
+        for (int i=0;i<Result1.GetRowCount();i++)
+                {
+            qreal res1,res2;
+            if (first==0)
+            res1=(qreal)(Result1(i,first));
+            else {
+              res1=(qreal)(Result1(i,first)-Result2(i,first));
+            }
+
+            if (second==0)
+            res2=(qreal)(Result1(i,second));
+            else {
+              res2=(qreal)(Result1(i,second)-Result2(i,second));
+            }
                        *series << QPointF(  res1,res2 );
                        ui->progressBar->setValue(50+30*(double)i/Result.GetRowCount());
                 }
@@ -287,8 +369,6 @@ void MainWindow::on_pushButton_2_clicked()
 
 
     ui->progressBar->setValue(80);
-
-
 
     //создаем график и добавляем в него синусоиду
     QChart *chart=new QChart();
@@ -303,7 +383,10 @@ void MainWindow::on_pushButton_2_clicked()
     //настройка осей графика
     QValueAxis *axisX=new QValueAxis();
     axisX->setTitleText(arg[first]);
-    if (ui->comboBox_3->currentText()!="Mistake(Sun - Moon)")
+
+    if ((ui->comboBox_3->currentText()!="Mistake(Classic - Moon)")
+    && (ui->comboBox_3->currentText()!="Mistake(Classic - Sun)")
+            && (ui->comboBox_3->currentText()!="Mistake(Classic - Full)"))
     {
         axisX->setLabelFormat("%i");
     }
@@ -319,9 +402,15 @@ void MainWindow::on_pushButton_2_clicked()
 
     QValueAxis *axisY=new QValueAxis();
     axisY->setTitleText(arg[second]);
-    if (ui->comboBox_3->currentText()!="Mistake(Sun - Moon)")
+
+    if ((ui->comboBox_3->currentText()!="Mistake(Classic - Moon)")
+    && (ui->comboBox_3->currentText()!="Mistake(Classic - Sun)")
+            && (ui->comboBox_3->currentText()!="Mistake(Classic - Full)"))
     axisY->setLabelFormat("%i");
-    else axisX->setLabelFormat("%f");
+    else
+    axisY->setLabelFormat("%f");
+
+
     chart->addAxis(axisY,Qt::AlignLeft);
     series->attachAxis(axisY);
 

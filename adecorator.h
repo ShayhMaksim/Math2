@@ -24,9 +24,6 @@ public:
     virtual TVector getRight( const TVector& X, long double t ) override;
     void Run() override;
     ModelEMS * EMS;
-    inline void setEMS( ModelEMS * EMS){
-        this->EMS=EMS;
-    }
     std::vector<TVector> vec_dX_EMS;
 };
 
@@ -38,9 +35,6 @@ public:
     virtual TVector getRight( const TVector& X, long double t ) override;
     void Run() override;
     ModelEMS * EMS;
-    inline void setEMS( ModelEMS * EMS){
-        this->EMS=EMS;
-    }
     std::vector<TVector> vec_dX_EMS;
 };
 
